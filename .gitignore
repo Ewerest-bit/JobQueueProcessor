@@ -1,0 +1,15 @@
+
+bin/
+obj/
+*.user
+.vs/
+*.suo
+
+.idea/
+.vscode/
+
+[Dd]ebug/
+[Rr]elease/
+
+appsettings.Development.json
+*.env
