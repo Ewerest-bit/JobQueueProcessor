@@ -9,5 +9,6 @@ namespace Application.Interfaces
         Task CreateJobAsync(Job job);
         Task UpdateJobAsync(Job job);
         Task DeleteJobAsync(int id);
+        Task<List<Job>> GetAllPendingJobAsync(int batchSize);
     }
 }

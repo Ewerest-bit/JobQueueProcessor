@@ -2,6 +2,7 @@
 using Api.Middleware;
 using Application.Interfaces;
 using Application.Services;
+using Application.Workers;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,7 @@ namespace Api
             builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddControllers();
+            builder.Services.AddHostedService<JobWorker>();
 
             builder.Services.AddSwaggerGen();
 

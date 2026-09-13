@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -33,6 +34,12 @@ namespace Infrastructure.Repositories
         public async Task<List<Job>> GetAllJobsAsync()
         {
             var jobs = await _context.Jobs.ToListAsync();
+            return jobs;
+        }
+
+        public async Task<List<Job>> GetAllPendingJobAsync(int batchSize)
+        {
+            var jobs = await _context.Jobs.Where(x => x.Status == JobStatus.Pending).Take(batchSize).ToListAsync();
             return jobs;
         }
 
