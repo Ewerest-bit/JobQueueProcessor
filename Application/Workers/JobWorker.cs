@@ -13,6 +13,7 @@ namespace Application.Workers
 		private readonly ILogger<JobWorker> _logger;
 		private const int BatchSize = 5;
 		private static readonly TimeSpan Interval = TimeSpan.FromSeconds(5);
+		private readonly BooleanGenerator _booleanGenerator = new BooleanGenerator();
 
 		public JobWorker(IServiceScopeFactory scopeFactory, ILogger<JobWorker> logger)
 		{
@@ -31,7 +32,7 @@ namespace Application.Workers
 
 						var jobs = await jobRepository.GetAllPendingJobAsync(BatchSize);
 
-						foreach (var job in jobs)
+                        foreach (var job in jobs)
 						{
 							try
 							{
@@ -40,11 +41,18 @@ namespace Application.Workers
 								await jobRepository.UpdateJobAsync(job);
 
 								await Task.Delay(Interval, stoppingToken);
-								job.Status = JobStatus.Completed;
+								if (_booleanGenerator.IsFailed())
+                                {
+									job.Status = JobStatus.Failed;
+									job.Result = "Simulated failure";
+								}
+								else {
+									job.Status = JobStatus.Completed;
+								}
 								job.CompletedAt = DateTime.UtcNow;
 								await jobRepository.UpdateJobAsync(job);
-									_logger.LogInformation("Job {JobId} completed", job.Id); 
-							}
+                                _logger.LogInformation("Job {JobId} finished with status {Status}", job.Id, job.Status);
+                            }
 							catch (Exception ex)
 							{
 								_logger.LogError(ex, "Failed to process job {JobId}", job.Id);
@@ -64,4 +72,20 @@ namespace Application.Workers
 			}
 		}
 	}
+
+	public class BooleanGenerator
+	{
+		Random rnd;
+
+		public BooleanGenerator()
+		{
+			rnd = new Random();
+		}
+
+		public bool IsFailed()
+		{
+			return rnd.Next(1, 101) <= 20;
+		}
+	}
+
 }
