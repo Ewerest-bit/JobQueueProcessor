@@ -19,6 +19,7 @@ namespace Api
             builder.Services.AddScoped<IJobService, JobService>();
             builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.Configure<WorkerSettings>(builder.Configuration.GetSection("WorkerSettings"));
             builder.Services.AddControllers();
             builder.Services.AddHostedService<JobWorker>();
 

@@ -4,6 +4,7 @@ using Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Application.Workers
 {
@@ -11,14 +12,14 @@ namespace Application.Workers
 	{
 		private readonly IServiceScopeFactory _scopeFactory;
 		private readonly ILogger<JobWorker> _logger;
-		private const int BatchSize = 5;
-		private static readonly TimeSpan Interval = TimeSpan.FromSeconds(5);
 		private readonly BooleanGenerator _booleanGenerator = new BooleanGenerator();
+		private readonly WorkerSettings _settings;
 
-		public JobWorker(IServiceScopeFactory scopeFactory, ILogger<JobWorker> logger)
+		public JobWorker(IServiceScopeFactory scopeFactory, ILogger<JobWorker> logger, IOptions<WorkerSettings> options)
 		{
 			_scopeFactory = scopeFactory;
 			_logger = logger;
+			_settings = options.Value;
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -30,7 +31,7 @@ namespace Application.Workers
 					{
 						var jobRepository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
 
-						var jobs = await jobRepository.GetAllPendingJobAsync(BatchSize);
+						var jobs = await jobRepository.GetAllPendingJobAsync(_settings.BatchSize);
 
                         foreach (var job in jobs)
 						{
@@ -40,7 +41,7 @@ namespace Application.Workers
 								job.Status = JobStatus.Running;
 								await jobRepository.UpdateJobAsync(job);
 
-								await Task.Delay(Interval, stoppingToken);
+								await Task.Delay(TimeSpan.FromSeconds(_settings.IntervalSeconds), stoppingToken);
 								if (_booleanGenerator.IsFailed())
                                 {
 									job.Status = JobStatus.Failed;
@@ -67,7 +68,7 @@ namespace Application.Workers
 				}
 				finally
 				{
-                    await Task.Delay(Interval, stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(_settings.IntervalSeconds), stoppingToken);
                 }
 			}
 		}
